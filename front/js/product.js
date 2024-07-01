@@ -39,7 +39,7 @@ function updatePage() {
 
   const colorsSelect = document.getElementById("colors");
 
-  // Populate colors select options
+ 
   product.colors.forEach((color) => {
     const option = document.createElement("option");
     option.textContent = color;
