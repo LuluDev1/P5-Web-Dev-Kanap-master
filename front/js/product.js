@@ -25,7 +25,7 @@ fetch(url)
 function updatePage() {
   const title = document.getElementById("title");
   title.textContent = product.name;
-  const imageCont = document.getElementById("item__img");
+  const imageCont = document.querySelector(".item__img");
   const image = document.createElement("img");
   image.src = product.imageUrl;
   image.alt = product.altText;
@@ -39,11 +39,33 @@ function updatePage() {
 
   const colorsSelect = document.getElementById("colors");
 
- 
   product.colors.forEach((color) => {
     const option = document.createElement("option");
     option.textContent = color;
     option.value = color;
     colorsSelect.appendChild(option);
   });
+}
+
+document.getElementById("addToCart").addEventListener("click", addToCart);
+
+function addToCart() {
+  // Retrieve the current value of 'num' from localStorage
+  var num = window.localStorage.getItem("num") || 0;
+
+  // Store the 'page_id' in localStorage with the key incremented value of 'num'
+  localStorage.setItem(num, page_id);
+
+  // Increment 'num' for the next item
+  num++;
+
+  // Store the updated 'num' back into localStorage
+  localStorage.setItem("num", num);
+  const cart = [1, 2, 3, 4, 5, 6, 7];
+  const cartString = JSON.stringify(cart);
+  console.log(cartString);
+  localStorage.setItem("cart", cartString);
+  const myCart = localStorage.getItem("cart");
+
+  console.log(JSON.parse(myCart));
 }

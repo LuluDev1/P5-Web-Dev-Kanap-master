@@ -1,5 +1,4 @@
 const url = "http://localhost:3000/api/products";
-let products = []; // Initialize products as an empty array
 
 // Fetch data from the API endpoint
 fetch(url)
@@ -10,19 +9,23 @@ fetch(url)
     return response.json();
   })
   .then((data) => {
-    products = data; 
-    createCards(products); // Call createCards after data is fetched
+    createCards(data); // Call createCards after data is fetched
   })
   .catch((error) => {
     console.error("Error fetching data:", error);
   });
+  
 
 // Function to create cards for each product
-function createCards(array) {
+/**
+ *
+ * @param {[object]} products - an products  of products
+ */
+function createCards(products) {
   const items = document.getElementById("items");
   items.innerHTML = "";
-  array.forEach((element) => {
-    const card = createCard(element); 
+  products.forEach((element) => {
+    const card = createCard(element);
     items.appendChild(card); // Append each card to the items container
   });
 }
@@ -43,7 +46,7 @@ function createCard(obj) {
   name.textContent = obj.name;
   description.textContent = obj.description;
 
-  // Add classes for styling 
+  // Add classes for styling
   name.classList.add("productName");
   description.classList.add("productDescription");
 
@@ -53,5 +56,5 @@ function createCard(obj) {
   article.appendChild(name);
   article.appendChild(description);
 
-  return link; 
+  return link;
 }
