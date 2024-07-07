@@ -100,6 +100,20 @@ function createCartItem(item, price) {
     cartItems.removeChild(cartItem);
   });
 
+  // Event listener for quantity change
+  quantityInput.addEventListener("change", (event) => {
+    const newQuantity = parseInt(event.target.value, 10);
+    if (newQuantity >= 1 && newQuantity <= 100) {
+      // Update item quantity in localStorage
+      item.quantity = newQuantity;
+      localStorage.setItem("item_" + item.num, JSON.stringify(item));
+    } else {
+      // Reset input value if out of range
+      event.target.value = item.quantity;
+      alert("Quantity must be between 1 and 100.");
+    }
+  });
+
   // Append cart item to cartItems container
   cartItems.appendChild(cartItem);
 }
