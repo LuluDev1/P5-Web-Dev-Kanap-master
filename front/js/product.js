@@ -50,22 +50,43 @@ function updatePage() {
 document.getElementById("addToCart").addEventListener("click", addToCart);
 
 function addToCart() {
-  // Retrieve the current value of 'num' from localStorage
-  var num = window.localStorage.getItem("num") || 0;
+  // Get color and quantity from form inputs
+  const color = document.getElementById("colors").value;
+  const quantity = parseInt(document.getElementById("quantity").value) || 1;
 
-  // Store the 'page_id' in localStorage with the key incremented value of 'num'
-  localStorage.setItem(num, page_id);
+  // Initialize num from localStorage or default to 0
+  let num = parseInt(window.localStorage.getItem("num")) || 0;
 
-  // Increment 'num' for the next item
-  num++;
+  let found = false;
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key.startsWith("item_")) {
+      const item = JSON.parse(localStorage.getItem(key));
+      if (item.page_id === page_id && item.color === color) {
+        item.quantity += quantity;
+        localStorage.setItem(key, JSON.stringify(item));
+        found = true;
+        break;
+      }
+    }
+  }
 
-  // Store the updated 'num' back into localStorage
-  localStorage.setItem("num", num);
-  const cart = [1, 2, 3, 4, 5, 6, 7];
-  const cartString = JSON.stringify(cart);
-  console.log(cartString);
-  localStorage.setItem("cart", cartString);
-  const myCart = localStorage.getItem("cart");
-
-  console.log(JSON.parse(myCart));
+  // If item doesn't exist, add it to localStorage
+  if (!found) {
+    localStorage.setItem(
+      "item_" + num,
+      JSON.stringify({
+        num: num,
+        quantity: quantity,
+        color: color,
+        page_id: page_id,
+        imageURL: product.imageUrl,
+        name: product.name,
+        altText: product.altTxt,
+        description: product.description,
+      })
+    );
+    num++; // Increment num for the next item
+    window.localStorage.setItem("num", num); // Store updated num in localStorage
+  }
 }
