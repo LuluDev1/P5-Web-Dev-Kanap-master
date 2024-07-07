@@ -1,6 +1,7 @@
 const cartItems = document.getElementById("cart__items");
 const url = "http://localhost:3000/api/products/";
 
+
 // Use async function to handle asynchronous fetch calls
 async function fetchAndCreateCartItems() {
   for (let i = 0; i < localStorage.length; i++) {
@@ -15,6 +16,7 @@ async function fetchAndCreateCartItems() {
       }
       const data = await response.json();
 
+      total += data.price;
       // Create cart item with fetched price
       createCartItem(item, data.price);
     } catch (error) {
