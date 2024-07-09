@@ -15,6 +15,7 @@ fetch(url)
     return response.json();
   })
   .then((data) => {
+    // UPdate the product page only when the promise completes
     product = data;
     updatePage();
   })
@@ -22,23 +23,27 @@ fetch(url)
     console.error("Error fetching data:", error);
   });
 
+// Update the product page with fetched product data
 function updatePage() {
+  // The title of the page
   const title = document.getElementById("title");
   title.textContent = product.name;
-  const imageCont = document.querySelector(".item__img");
+
+  // Product image
   const image = document.createElement("img");
   image.src = product.imageUrl;
   image.alt = product.altText;
-  imageCont.innerHTML = "";
-  imageCont.appendChild(image);
+  document.querySelector(".item__img").innerHTML = "";
+  document.querySelector(".item__img").appendChild(image);
 
-  const price = document.getElementById("price");
-  price.textContent = product.price;
-  const description = document.getElementById("description");
-  description.textContent = product.description;
+  // Product price and description
+  document.getElementById("price").textContent = product.price;
+  document.getElementById("description").textContent = product.description;
 
+  // Color input field
   const colorsSelect = document.getElementById("colors");
-
+  colorsSelect.innerHTML = "";
+  // Create a color option for every product color option
   product.colors.forEach((color) => {
     const option = document.createElement("option");
     option.textContent = color;
@@ -47,6 +52,7 @@ function updatePage() {
   });
 }
 
+// Get the add to cart element
 document.getElementById("addToCart").addEventListener("click", addToCart);
 
 function addToCart() {
@@ -60,33 +66,45 @@ function addToCart() {
   let found = false;
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key.startsWith("item_")) {
+
+    // Skip the "num" key to avoid processing it as an item
+    if (key === "num") continue;
+
+    try {
       const item = JSON.parse(localStorage.getItem(key));
+      
+
+      // Check if item matches the current product and color
       if (item.page_id === page_id && item.color === color) {
         item.quantity += quantity;
-        localStorage.setItem(key, JSON.stringify(item));
+        localStorage.setItem(key, JSON.stringify(item)); // Update item with new quantity using the same key
+        console.log("Updated item:", item);
         found = true;
         break;
       }
+    } catch (error) {
+      console.error("Error parsing item from localStorage:", error);
     }
   }
 
   // If item doesn't exist, add it to localStorage
   if (!found) {
-    localStorage.setItem(
-      "item_" + num,
-      JSON.stringify({
-        num: num,
-        quantity: quantity,
-        color: color,
-        page_id: page_id,
-        imageURL: product.imageUrl,
-        name: product.name,
-        altText: product.altTxt,
-        description: product.description,
-      })
-    );
+    const newItem = {
+      num: num,
+      quantity: quantity,
+      color: color,
+      page_id: page_id,
+      imageURL: product.imageUrl,
+      name: product.name,
+      altText: product.altText,
+      description: product.description,
+    };
+    localStorage.setItem(num.toString(), JSON.stringify(newItem));
+    console.log("Added new item:", newItem);
     num++; // Increment num for the next item
     window.localStorage.setItem("num", num); // Store updated num in localStorage
   }
+
+  // Debug: Log the entire localStorage
+  console.log("LocalStorage after addToCart:", localStorage);
 }

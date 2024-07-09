@@ -1,37 +1,40 @@
 const cartItems = document.getElementById("cart__items");
-const url = "http://localhost:3000/api/products/";
+let totalPrice = 0;
+let totalQuantity = 0;
 
+const cartTotal = document.getElementById("totalPrice");
+const cartQuantity = document.getElementById("totalQuantity");
 
-// Use async function to handle asynchronous fetch calls
-async function fetchAndCreateCartItems() {
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
+const fetchAndCreateCartItems = () => {
+  for (let i = 1; i < localStorage.length; i++) {
+    const key = localStorage.key(i).toString();
     const item = JSON.parse(localStorage.getItem(key));
 
-    try {
-      // Fetch product details based on item.page_id
-      const response = await fetch(url + item.page_id);
-      if (!response.ok) {
-        throw new Error("Failed to fetch product details");
-      }
-      const data = await response.json();
-
-      total += data.price;
-      // Create cart item with fetched price
-      createCartItem(item, data.price);
-    } catch (error) {
-      console.error("Error fetching product details:", error);
-    }
+    fetch("http://localhost:3000/api/products/" + item.page_id)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to fetch product details");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        createCartItem(item, data.price, key);
+        totalPrice += data.price * item.quantity;
+        totalQuantity += item.quantity;
+        updateTotalPriceAndQuantity();
+      })
+      .catch((error) => {
+        console.error("Error fetching product details:", error);
+      });
   }
-}
+};
 
-function createCartItem(item, price) {
+function createCartItem(item, price, key) {
   const cartItem = document.createElement("article");
   cartItem.classList.add("cart__item");
   cartItem.setAttribute("data-id", item.page_id);
   cartItem.setAttribute("data-color", item.color);
 
-  // Create and append image container
   const cartItemImage = document.createElement("div");
   cartItemImage.classList.add("cart__item__img");
   const cartImage = document.createElement("img");
@@ -39,12 +42,10 @@ function createCartItem(item, price) {
   cartItemImage.appendChild(cartImage);
   cartItem.appendChild(cartItemImage);
 
-  // Create and append content container
   const cartItemContent = document.createElement("div");
   cartItemContent.classList.add("cart__item__content");
   cartItem.appendChild(cartItemContent);
 
-  // Create and append description section
   const cartItemDesc = document.createElement("div");
   cartItemDesc.classList.add("cart__item__content__description");
   cartItemContent.appendChild(cartItemDesc);
@@ -54,19 +55,17 @@ function createCartItem(item, price) {
   cartItemDesc.appendChild(h2);
 
   const color = document.createElement("p");
-  color.textContent = item.color; // Assuming you want to display color here
+  color.textContent = item.color;
   cartItemDesc.appendChild(color);
 
   const priceElement = document.createElement("p");
-  priceElement.textContent = "€" + price; // Use the fetched price
+  priceElement.textContent = "€" + price;
   cartItemDesc.appendChild(priceElement);
 
-  // Create and append settings section
   const cartItemSettings = document.createElement("div");
   cartItemSettings.classList.add("cart__item__content__settings");
   cartItemContent.appendChild(cartItemSettings);
 
-  // Quantity section
   const cartItemQuantity = document.createElement("div");
   cartItemQuantity.classList.add("cart__item__content__settings__quantity");
   cartItemSettings.appendChild(cartItemQuantity);
@@ -84,7 +83,6 @@ function createCartItem(item, price) {
   quantityInput.max = "100";
   cartItemQuantity.appendChild(quantityInput);
 
-  // Delete button
   const deleteButton = document.createElement("div");
   deleteButton.classList.add("cart__item__content__settings__delete");
   const deleteBtn = document.createElement("p");
@@ -93,32 +91,188 @@ function createCartItem(item, price) {
   deleteButton.appendChild(deleteBtn);
   cartItemSettings.appendChild(deleteButton);
 
-  // Add event listener to delete button
   deleteBtn.addEventListener("click", () => {
-    // Remove the cart item from localStorage
-    localStorage.removeItem("item_" + item.num);
-
-    // Remove the cart item from the DOM
+    localStorage.removeItem(key);
     cartItems.removeChild(cartItem);
+    totalPrice -= price * item.quantity;
+    totalQuantity -= item.quantity;
+    updateTotalPriceAndQuantity();
   });
 
-  // Event listener for quantity change
   quantityInput.addEventListener("change", (event) => {
     const newQuantity = parseInt(event.target.value, 10);
     if (newQuantity >= 1 && newQuantity <= 100) {
-      // Update item quantity in localStorage
+      totalPrice -= price * item.quantity;
+      totalQuantity -= item.quantity;
       item.quantity = newQuantity;
-      localStorage.setItem("item_" + item.num, JSON.stringify(item));
+      localStorage.setItem(key, JSON.stringify(item));
+      totalPrice += price * item.quantity;
+      totalQuantity += item.quantity;
+      updateTotalPriceAndQuantity();
     } else {
-      // Reset input value if out of range
       event.target.value = item.quantity;
       alert("Quantity must be between 1 and 100.");
     }
   });
 
-  // Append cart item to cartItems container
   cartItems.appendChild(cartItem);
 }
 
-// Call the async function to fetch and create cart items
+const updateTotalPriceAndQuantity = () => {
+  cartTotal.textContent = totalPrice;
+  cartQuantity.textContent = totalQuantity;
+};
+
 fetchAndCreateCartItems();
+
+// Define global variables for the form input elements
+const firstNameInput = document.getElementById("firstName");
+const lastNameInput = document.getElementById("lastName");
+const addressInput = document.getElementById("address");
+const cityInput = document.getElementById("city");
+const emailInput = document.getElementById("email");
+
+// Validation functions with live error warnings
+function validateFirstName() {
+  const regName = /^[a-z ,.'-]+$/i;
+  const firstNameErrorMsg = document.getElementById("firstNameErrorMsg");
+
+  const firstName = firstNameInput.value.trim();
+  if (firstName.length > 0 && regName.test(firstName)) {
+    firstNameErrorMsg.textContent = "";
+    return true;
+  } else {
+    firstNameErrorMsg.textContent = "Please input a correct first name.";
+    return false;
+  }
+}
+
+function validateLastName() {
+  const regName = /^[a-z ,.'-]+$/i;
+  const lastNameErrorMsg = document.getElementById("lastNameErrorMsg");
+
+  const lastName = lastNameInput.value.trim();
+  if (regName.test(lastName)) {
+    lastNameErrorMsg.textContent = "";
+    return true;
+  } else {
+    lastNameErrorMsg.textContent = "Please input a correct last name.";
+    return false;
+  }
+}
+
+function validateAddress() {
+  const regAddress = /^[a-zA-Z0-9\s,.'\-#]+$/;
+  const addressErrorMsg = document.getElementById("addressErrorMsg");
+
+  const address = addressInput.value.trim();
+  if (regAddress.test(address)) {
+    addressErrorMsg.textContent = "";
+    return true;
+  } else {
+    addressErrorMsg.textContent = "Please enter a valid address.";
+    return false;
+  }
+}
+
+function validateCity() {
+  const regCity = /^[a-zA-Z\s.'\-]+$/;
+  const cityErrorMsg = document.getElementById("cityErrorMsg");
+
+  const city = cityInput.value.trim();
+  if (regCity.test(city)) {
+    cityErrorMsg.textContent = "";
+    return true;
+  } else {
+    cityErrorMsg.textContent = "Please enter a valid city name.";
+    return false;
+  }
+}
+
+function validateEmail() {
+  const regEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  const emailErrorMsg = document.getElementById("emailErrorMsg");
+
+  const email = emailInput.value.trim();
+  if (regEmail.test(email)) {
+    emailErrorMsg.textContent = "";
+    return true;
+  } else {
+    emailErrorMsg.textContent = "Please enter a valid email address.";
+    return false;
+  }
+}
+
+// Function to check all validations
+function validateForm() {
+  return (
+    validateFirstName() &&
+    validateLastName() &&
+    validateAddress() &&
+    validateCity() &&
+    validateEmail()
+  );
+}
+
+// Call validation functions to enable live error warnings on input change
+firstNameInput.addEventListener("input", validateFirstName);
+lastNameInput.addEventListener("input", validateLastName);
+addressInput.addEventListener("input", validateAddress);
+cityInput.addEventListener("input", validateCity);
+emailInput.addEventListener("input", validateEmail);
+
+// Define form
+const form = document.querySelector("form");
+form.addEventListener("submit", (e) => {
+  e.preventDefault();
+  if (localStorage.length === 0) {
+    alert("Your cart is empty. Please add items before placing an order.");
+    return;
+  }
+  if (validateForm()) {
+    const products = [];
+    for (let i = 1; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      const item = JSON.parse(localStorage.getItem(key));
+      products.push(item.page_id);
+    }
+
+    fetch("http://localhost:3000/api/products/order", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        contact: {
+          firstName: firstNameInput.value,
+          lastName: lastNameInput.value,
+          address: addressInput.value,
+          city: cityInput.value,
+          email: emailInput.value,
+        },
+        products,
+      }),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to place order");
+        }
+        return response.json();
+      })
+      .then((json) => {
+        console.log("Order placed successfully");
+        localStorage.setItem("customerOrder", JSON.stringify(json));
+        let orderId = json.orderId;
+
+        window.location.href = "confirmation.html" + "?orderId=" + orderId;
+        localStorage.clear();
+      })
+      .catch((error) => {
+        console.error("Error placing order:", error);
+        alert("Error placing order. Please try again later.");
+      });
+  } else {
+    console.log("Form validation failed. Please check errors.");
+    alert("Please fill out all required fields correctly.");
+  }
+});
