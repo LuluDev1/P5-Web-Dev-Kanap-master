@@ -223,6 +223,8 @@ emailInput.addEventListener("input", validateEmail);
 
 // Define form
 const form = document.querySelector("form");
+
+// Form event listener
 form.addEventListener("submit", (e) => {
   e.preventDefault();
   if (localStorage.length === 0) {
