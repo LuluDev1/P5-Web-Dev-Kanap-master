@@ -9,49 +9,55 @@ fetch(url)
     return response.json();
   })
   .then((data) => {
-    // Call createCards after data is fetched
     createCards(data);
   })
   .catch((error) => {
     console.error("Error fetching data:", error);
   });
 
-// Function that calls the createcard function to create multiple ones
-function createCards(products) {
+/**
+ * Create cards for each product in the provided data JSON array
+ * @param {Array} products - JSON Array of product objects
+ */
+const createCards = (products) => {
   const items = document.getElementById("items");
-  items.innerHTML = "";
-  products.forEach((element) => {
-    // For each  obj create a card element
-    const card = createCard(element);
+  items.textContent = ""; // Clear previous content
+
+  products.forEach((product) => {
+    const card = createCard(product);
     items.appendChild(card);
   });
-}
+};
 
-// Function to create a single card for a product
-function createCard(obj) {
-  // Create elements for the card structure
+/**
+ * Create a single card element for a product
+ * @param {Object} product - Product object containing details
+ * @returns {HTMLElement} - Link element representing the product card
+ */
+const createCard = (product) => {
   const link = document.createElement("a");
+  link.setAttribute("href", `./product.html?id=${product._id}`);
+
   const article = document.createElement("article");
+
   const image = document.createElement("img");
+  image.setAttribute("src", product.imageUrl);
+  image.setAttribute("alt", product.altTxt);
+
   const name = document.createElement("h3");
-  const description = document.createElement("p");
-
-  // Set attributes and text content for each element
-  link.setAttribute("href", "./product.html?id=" + obj._id);
-  image.setAttribute("src", obj.imageUrl);
-  image.setAttribute("alt", obj.altTxt);
-  name.textContent = obj.name;
-  description.textContent = obj.description;
-
-  // Add classes for styling
+  name.textContent = product.name;
   name.classList.add("productName");
+
+  const description = document.createElement("p");
+  description.textContent = product.description;
   description.classList.add("productDescription");
 
   // Append elements to build the card structure
-  link.appendChild(article);
   article.appendChild(image);
   article.appendChild(name);
   article.appendChild(description);
 
+  link.appendChild(article);
+
   return link;
-}
+};

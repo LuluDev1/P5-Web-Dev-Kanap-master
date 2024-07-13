@@ -1,13 +1,13 @@
 const queryString = window.location.search;
 const urlParams = new URLSearchParams(queryString);
-const page_id = urlParams.get("id");
+const pageId = urlParams.get("id");
 
-const url = "http://localhost:3000/api/products/" + page_id;
+const apiUrl = `http://localhost:3000/api/products/${pageId}`;
 
 let product;
 
 // Fetch data from the API endpoint
-fetch(url)
+fetch(apiUrl)
   .then((response) => {
     if (!response.ok) {
       throw new Error("Network response was not ok");
@@ -15,17 +15,18 @@ fetch(url)
     return response.json();
   })
   .then((data) => {
-    // UPdate the product page only when the promise completes
     product = data;
     updatePage();
   })
   .catch((error) => {
-    console.error("Error fetching data:", error);
+    console.error("Error fetching product data:", error);
   });
 
-// Update the product page with fetched product data
+/**
+ * Updates the product page with details of the fetched product.
+ */
 function updatePage() {
-  // The title of the page
+  // Title of the product page
   const title = document.getElementById("title");
   title.textContent = product.name;
 
@@ -33,51 +34,50 @@ function updatePage() {
   const image = document.createElement("img");
   image.src = product.imageUrl;
   image.alt = product.altText;
-  document.querySelector(".item__img").innerHTML = "";
-  document.querySelector(".item__img").appendChild(image);
+  const itemImg = document.querySelector(".item__img");
+  itemImg.innerHTML = ""; // Clear previous content
+  itemImg.appendChild(image);
 
   // Product price and description
   document.getElementById("price").textContent = product.price;
   document.getElementById("description").textContent = product.description;
 
-  // Color input field
+  // Color options select
   const colorsSelect = document.getElementById("colors");
   colorsSelect.innerHTML = "";
-  // Create a color option for every product color option
+
+  // Create color options based on product colors
   product.colors.forEach((color) => {
-    const option = document.createElement("option");
-    option.textContent = color;
-    option.value = color;
+    const option = new Option(color, color);
     colorsSelect.appendChild(option);
   });
 }
 
-// Get the add to cart element
+// Add to cart button event listener
 document.getElementById("addToCart").addEventListener("click", addToCart);
 
+/**
+ * Adds the selected product to the shopping cart stored in localStorage.
+ */
 function addToCart() {
-  // Get color and quantity from form inputs
   const color = document.getElementById("colors").value;
   const quantity = parseInt(document.getElementById("quantity").value) || 1;
 
-  // Initialize num from localStorage or default to 0
-  let num = parseInt(window.localStorage.getItem("num")) || 0;
-
+  let num = parseInt(localStorage.getItem("num")) || 0;
   let found = false;
+
+  // Iterate through localStorage items to find matching product
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-
-    // Skip the "num" key to avoid processing it as an item
     if (key === "num") continue;
 
     try {
       const item = JSON.parse(localStorage.getItem(key));
-      
 
-      // Check if item matches the current product and color
-      if (item.page_id === page_id && item.color === color) {
+      // Update quantity if product and color match
+      if (item.pageId === pageId && item.color === color) {
         item.quantity += quantity;
-        localStorage.setItem(key, JSON.stringify(item)); // Update item with new quantity using the same key
+        localStorage.setItem(key, JSON.stringify(item));
         console.log("Updated item:", item);
         found = true;
         break;
@@ -87,24 +87,25 @@ function addToCart() {
     }
   }
 
-  // If item doesn't exist, add it to localStorage
+  // If product not found in cart, add as new item
   if (!found) {
     const newItem = {
       num: num,
       quantity: quantity,
       color: color,
-      page_id: page_id,
-      imageURL: product.imageUrl,
+      pageId: pageId,
+      imageUrl: product.imageUrl,
       name: product.name,
       altText: product.altText,
       description: product.description,
     };
+
     localStorage.setItem(num.toString(), JSON.stringify(newItem));
     console.log("Added new item:", newItem);
-    num++; // Increment num for the next item
-    window.localStorage.setItem("num", num); // Store updated num in localStorage
+    num++;
+    localStorage.setItem("num", num.toString());
   }
 
-  // Debug: Log the entire localStorage
+  // Debug: Log entire localStorage
   console.log("LocalStorage after addToCart:", localStorage);
 }

@@ -4,13 +4,13 @@ let totalQuantity = 0;
 
 const cartTotal = document.getElementById("totalPrice");
 const cartQuantity = document.getElementById("totalQuantity");
-
+const num = localStorage.getItem("num");
 const fetchAndCreateCartItems = () => {
-  for (let i = 1; i < localStorage.length; i++) {
-    const key = localStorage.key(i).toString();
+  for (let i = 0; i <= num; i++) {
+    const key = localStorage.key(i);
     const item = JSON.parse(localStorage.getItem(key));
-
-    fetch("http://localhost:3000/api/products/" + item.page_id)
+    console.log(key);
+    fetch(`http://localhost:3000/api/products/${item.pageId}`)
       .then((response) => {
         if (!response.ok) {
           throw new Error("Failed to fetch product details");
@@ -32,13 +32,13 @@ const fetchAndCreateCartItems = () => {
 function createCartItem(item, price, key) {
   const cartItem = document.createElement("article");
   cartItem.classList.add("cart__item");
-  cartItem.setAttribute("data-id", item.page_id);
+  cartItem.setAttribute("data-id", item.pageId);
   cartItem.setAttribute("data-color", item.color);
 
   const cartItemImage = document.createElement("div");
   cartItemImage.classList.add("cart__item__img");
   const cartImage = document.createElement("img");
-  cartImage.src = item.imageURL;
+  cartImage.src = item.imageUrl;
   cartItemImage.appendChild(cartImage);
   cartItem.appendChild(cartItemImage);
 
@@ -97,6 +97,9 @@ function createCartItem(item, price, key) {
     totalPrice -= price * item.quantity;
     totalQuantity -= item.quantity;
     updateTotalPriceAndQuantity();
+    let num = localStorage.getItem("num");
+    num--;
+    localStorage.setItem("num", num);
   });
 
   quantityInput.addEventListener("change", (event) => {
@@ -234,7 +237,7 @@ form.addEventListener("submit", (e) => {
     for (let i = 1; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       const item = JSON.parse(localStorage.getItem(key));
-      products.push(item.page_id);
+      products.push(item.pageId);
     }
 
     fetch("http://localhost:3000/api/products/order", {
