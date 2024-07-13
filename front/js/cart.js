@@ -135,85 +135,76 @@ const addressInput = document.getElementById("address");
 const cityInput = document.getElementById("city");
 const emailInput = document.getElementById("email");
 
-// Validation functions with live error warnings
-function validateFirstName() {
-  const regName = /^[a-z ,.'-]+$/i;
-  const firstNameErrorMsg = document.getElementById("firstNameErrorMsg");
-
-  const firstName = firstNameInput.value.trim();
-  if (firstName.length > 0 && regName.test(firstName)) {
-    firstNameErrorMsg.textContent = "";
+/**
+ * Validates an input element's value against a regular expression and updates the error message element.
+ *
+ * @param {HTMLInputElement} element - The input element to validate.
+ * @param {RegExp} regex - The regular expression to test the input value against.
+ * @param {HTMLElement} errorMsgElement - The element where the error message will be displayed.
+ * @param {string} errorMsg - The error message to display if validation fails.
+ * @returns {boolean} - Returns true if the input value is valid, otherwise false.
+ */
+function validateInput(element, regex, errorMsgElement, errorMsg) {
+  const value = element.value.trim();
+  if (regex.test(value)) {
+    errorMsgElement.textContent = "";
     return true;
   } else {
-    firstNameErrorMsg.textContent = "Please input a correct first name.";
+    errorMsgElement.textContent = errorMsg;
     return false;
   }
 }
 
-function validateLastName() {
-  const regName = /^[a-z ,.'-]+$/i;
-  const lastNameErrorMsg = document.getElementById("lastNameErrorMsg");
+// Validation rules
+const validationRules = [
+  {
+    element: document.getElementById("firstName"),
+    regex: /^[a-z ,.'-]+$/i,
+    errorMsgElement: document.getElementById("firstNameErrorMsg"),
+    errorMsg: "Please input a correct first name.",
+  },
+  {
+    element: document.getElementById("lastName"),
+    regex: /^[a-z ,.'-]+$/i,
+    errorMsgElement: document.getElementById("lastNameErrorMsg"),
+    errorMsg: "Please input a correct last name.",
+  },
+  {
+    element: document.getElementById("address"),
+    regex: /^[a-zA-Z0-9\s,.'\-#]+$/,
+    errorMsgElement: document.getElementById("addressErrorMsg"),
+    errorMsg: "Please enter a valid address.",
+  },
+  {
+    element: document.getElementById("city"),
+    regex: /^[a-zA-Z\s.'\-]+$/,
+    errorMsgElement: document.getElementById("cityErrorMsg"),
+    errorMsg: "Please enter a valid city name.",
+  },
+  {
+    element: document.getElementById("email"),
+    regex: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+    errorMsgElement: document.getElementById("emailErrorMsg"),
+    errorMsg: "Please enter a valid email address.",
+  },
+];
 
-  const lastName = lastNameInput.value.trim();
-  if (regName.test(lastName)) {
-    lastNameErrorMsg.textContent = "";
-    return true;
-  } else {
-    lastNameErrorMsg.textContent = "Please input a correct last name.";
-    return false;
-  }
-}
+// Attach event listeners for live validation
+validationRules.forEach((rule) => {
+  rule.element.addEventListener("input", () => {
+    validateInput(
+      rule.element,
+      rule.regex,
+      rule.errorMsgElement,
+      rule.errorMsg
+    );
+  });
+});
 
-function validateAddress() {
-  const regAddress = /^[a-zA-Z0-9\s,.'\-#]+$/;
-  const addressErrorMsg = document.getElementById("addressErrorMsg");
-
-  const address = addressInput.value.trim();
-  if (regAddress.test(address)) {
-    addressErrorMsg.textContent = "";
-    return true;
-  } else {
-    addressErrorMsg.textContent = "Please enter a valid address.";
-    return false;
-  }
-}
-
-function validateCity() {
-  const regCity = /^[a-zA-Z\s.'\-]+$/;
-  const cityErrorMsg = document.getElementById("cityErrorMsg");
-
-  const city = cityInput.value.trim();
-  if (regCity.test(city)) {
-    cityErrorMsg.textContent = "";
-    return true;
-  } else {
-    cityErrorMsg.textContent = "Please enter a valid city name.";
-    return false;
-  }
-}
-
-function validateEmail() {
-  const regEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  const emailErrorMsg = document.getElementById("emailErrorMsg");
-
-  const email = emailInput.value.trim();
-  if (regEmail.test(email)) {
-    emailErrorMsg.textContent = "";
-    return true;
-  } else {
-    emailErrorMsg.textContent = "Please enter a valid email address.";
-    return false;
-  }
-}
-
-// Function to check all validations
+// Validate entire form
 function validateForm() {
-  return (
-    validateFirstName() &&
-    validateLastName() &&
-    validateAddress() &&
-    validateCity() &&
-    validateEmail()
+  return validationRules.every((rule) =>
+    validateInput(rule.element, rule.regex, rule.errorMsgElement, rule.errorMsg)
   );
 }
 
