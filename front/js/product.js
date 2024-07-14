@@ -43,7 +43,7 @@ function updatePage() {
   // Color input field
   const colorsSelect = document.getElementById("colors");
   colorsSelect.innerHTML = "";
-  
+
   // Create a color option for every product color option
   product.colors.forEach((color) => {
     const option = document.createElement("option");
@@ -57,38 +57,30 @@ function updatePage() {
 document.getElementById("addToCart").addEventListener("click", addToCart);
 
 function addToCart() {
-  // Get color and quantity from form inputs
   const color = document.getElementById("colors").value;
-  const quantity = parseInt(document.getElementById("quantity").value) || 1;
+  const quantity = parseInt(document.getElementById("quantity").value);
 
-  // Initialize num from localStorage or default to 0
-  let num = parseInt(window.localStorage.getItem("num")) || 0;
-
-  // Boolean value for if the same item in the cart exists
-  let found = false;
-
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-
-    // Skip the "num" key to avoid processing it as an item
-    if (key === "num") continue;
-
-    try {
-      const item = JSON.parse(localStorage.getItem(key));
-
-      // Check if item matches the current product and color
-      if (item.page_id === page_id && item.color === color) {
-        item.quantity += quantity;
-        localStorage.setItem(key, JSON.stringify(item)); // Update item with new quantity using the same key
-        found = true;
-        break;
-      }
-    } catch (error) {
-      console.error("Error parsing item from localStorage:", error);
-    }
+  if (quantity < 1) {
+    alert("Quantity must be 1 or greater to add to cart.");
+    return;
   }
 
-  // If item doesn't exist, add it to localStorage/Cart
+  const CART_KEY = "cartItems";
+  const NUM_KEY = "num";
+
+  let num = parseInt(window.localStorage.getItem(NUM_KEY)) || 0;
+  let cartItems = JSON.parse(window.localStorage.getItem(CART_KEY)) || [];
+
+  let found = false;
+
+  cartItems = cartItems.map((item) => {
+    if (item.page_id === page_id && item.color === color) {
+      item.quantity += quantity;
+      found = true;
+    }
+    return item;
+  });
+
   if (!found) {
     const newItem = {
       num: num,
@@ -100,8 +92,12 @@ function addToCart() {
       altText: product.altText,
       description: product.description,
     };
-    localStorage.setItem(num.toString(), JSON.stringify(newItem));
-    num++; // Increment num for the next item
-    window.localStorage.setItem("num", num); // Store updated num in localStorage
+
+    cartItems.push(newItem);
+    num++;
+    window.localStorage.setItem(NUM_KEY, num);
   }
+
+  window.localStorage.setItem(CART_KEY, JSON.stringify(cartItems));
+  alert("Added to cart");
 }

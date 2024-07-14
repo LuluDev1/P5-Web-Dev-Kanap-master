@@ -1,16 +1,17 @@
 const cartItems = document.getElementById("cart__items");
-let totalPrice = 0;
-let totalQuantity = 0;
-
 const cartTotal = document.getElementById("totalPrice");
 const cartQuantity = document.getElementById("totalQuantity");
 
-const fetchAndCreateCartItems = () => {
-  for (let i = 1; i < localStorage.length; i++) {
-    const key = localStorage.key(i).toString();
-    const item = JSON.parse(localStorage.getItem(key));
+let totalPrice = 0;
+let totalQuantity = 0;
 
-    fetch("http://localhost:3000/api/products/" + item.page_id)
+/**
+ * Fetch each product and create card element
+ */
+const fetchAndCreateCartItems = () => {
+  const cartItemsData = JSON.parse(localStorage.getItem("cartItems")) || [];
+  cartItemsData.forEach((item, index) => {
+    fetch(`http://localhost:3000/api/products/${item.page_id}`)
       .then((response) => {
         if (!response.ok) {
           throw new Error("Failed to fetch product details");
@@ -18,7 +19,7 @@ const fetchAndCreateCartItems = () => {
         return response.json();
       })
       .then((data) => {
-        createCartItem(item, data.price, key);
+        createCartItem(item, data.price, index);
         totalPrice += data.price * item.quantity;
         totalQuantity += item.quantity;
         updateTotalPriceAndQuantity();
@@ -26,15 +27,24 @@ const fetchAndCreateCartItems = () => {
       .catch((error) => {
         console.error("Error fetching product details:", error);
       });
-  }
+  });
 };
 
-function createCartItem(item, price, key) {
+/**
+ * Create cart item cards
+ *
+ * @param {object} item - cart item
+ * @param {number} price - cart item price
+ * @param {number} index - localStorage key index
+ */
+function createCartItem(item, price, index) {
+  // Article element
   const cartItem = document.createElement("article");
   cartItem.classList.add("cart__item");
   cartItem.setAttribute("data-id", item.page_id);
   cartItem.setAttribute("data-color", item.color);
 
+  // Image element
   const cartItemImage = document.createElement("div");
   cartItemImage.classList.add("cart__item__img");
   const cartImage = document.createElement("img");
@@ -42,30 +52,37 @@ function createCartItem(item, price, key) {
   cartItemImage.appendChild(cartImage);
   cartItem.appendChild(cartItemImage);
 
+  // Content element
   const cartItemContent = document.createElement("div");
   cartItemContent.classList.add("cart__item__content");
   cartItem.appendChild(cartItemContent);
 
+  // Description element
   const cartItemDesc = document.createElement("div");
   cartItemDesc.classList.add("cart__item__content__description");
   cartItemContent.appendChild(cartItemDesc);
 
+  // Title element
   const h2 = document.createElement("h2");
   h2.textContent = item.name;
   cartItemDesc.appendChild(h2);
 
+  // Color element
   const color = document.createElement("p");
   color.textContent = item.color;
   cartItemDesc.appendChild(color);
 
+  // Price element
   const priceElement = document.createElement("p");
   priceElement.textContent = "€" + price;
   cartItemDesc.appendChild(priceElement);
 
+  // Cart settings
   const cartItemSettings = document.createElement("div");
   cartItemSettings.classList.add("cart__item__content__settings");
   cartItemContent.appendChild(cartItemSettings);
 
+  // Quantity
   const cartItemQuantity = document.createElement("div");
   cartItemQuantity.classList.add("cart__item__content__settings__quantity");
   cartItemSettings.appendChild(cartItemQuantity);
@@ -83,6 +100,7 @@ function createCartItem(item, price, key) {
   quantityInput.max = "100";
   cartItemQuantity.appendChild(quantityInput);
 
+  // Delete
   const deleteButton = document.createElement("div");
   deleteButton.classList.add("cart__item__content__settings__delete");
   const deleteBtn = document.createElement("p");
@@ -91,8 +109,11 @@ function createCartItem(item, price, key) {
   deleteButton.appendChild(deleteBtn);
   cartItemSettings.appendChild(deleteButton);
 
+  // Update num if item removed
   deleteBtn.addEventListener("click", () => {
-    localStorage.removeItem(key);
+    const cartItemsData = JSON.parse(localStorage.getItem("cartItems")) || [];
+    cartItemsData.splice(index, 1);
+    localStorage.setItem("cartItems", JSON.stringify(cartItemsData));
     cartItems.removeChild(cartItem);
     totalPrice -= price * item.quantity;
     totalQuantity -= item.quantity;
@@ -105,7 +126,9 @@ function createCartItem(item, price, key) {
       totalPrice -= price * item.quantity;
       totalQuantity -= item.quantity;
       item.quantity = newQuantity;
-      localStorage.setItem(key, JSON.stringify(item));
+      const cartItemsData = JSON.parse(localStorage.getItem("cartItems")) || [];
+      cartItemsData[index] = item;
+      localStorage.setItem("cartItems", JSON.stringify(cartItemsData));
       totalPrice += price * item.quantity;
       totalQuantity += item.quantity;
       updateTotalPriceAndQuantity();
@@ -118,6 +141,9 @@ function createCartItem(item, price, key) {
   cartItems.appendChild(cartItem);
 }
 
+/**
+ * Update the price and quantity on the page
+ */
 const updateTotalPriceAndQuantity = () => {
   cartTotal.textContent = totalPrice;
   cartQuantity.textContent = totalQuantity;
@@ -125,119 +151,78 @@ const updateTotalPriceAndQuantity = () => {
 
 fetchAndCreateCartItems();
 
-// Define global variables for the form input elements
-const firstNameInput = document.getElementById("firstName");
-const lastNameInput = document.getElementById("lastName");
-const addressInput = document.getElementById("address");
-const cityInput = document.getElementById("city");
-const emailInput = document.getElementById("email");
+/**
+ * And array with all the input ids regex and error msg
+ */
+const inputs = [
+  {
+    id: "firstName",
+    regex: /^[a-z ,.'-]+$/i,
+    errorMsg: "Please input a correct first name.",
+  },
+  {
+    id: "lastName",
+    regex: /^[a-z ,.'-]+$/i,
+    errorMsg: "Please input a correct last name.",
+  },
+  {
+    id: "address",
+    regex: /^[a-zA-Z0-9\s,.'\-#]+$/,
+    errorMsg: "Please enter a valid address.",
+  },
+  {
+    id: "city",
+    regex: /^[a-zA-Z\s.'\-]+$/,
+    errorMsg: "Please enter a valid city name.",
+  },
+  {
+    id: "email",
+    regex: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+    errorMsg: "Please enter a valid email address.",
+  },
+];
 
-// Validation functions with live error warnings
-function validateFirstName() {
-  const regName = /^[a-z ,.'-]+$/i;
-  const firstNameErrorMsg = document.getElementById("firstNameErrorMsg");
-
-  const firstName = firstNameInput.value.trim();
-  if (firstName.length > 0 && regName.test(firstName)) {
-    firstNameErrorMsg.textContent = "";
-    return true;
-  } else {
-    firstNameErrorMsg.textContent = "Please input a correct first name.";
-    return false;
-  }
+/**
+ * Validate a single input field
+ * @param {object} input - The input field object
+ * @returns {boolean} - True if the input is valid, otherwise false
+ */
+function validateInput(input) {
+  const value = document.getElementById(input.id).value.trim();
+  const isValid = input.regex.test(value);
+  const errorMsgElement = document.getElementById(`${input.id}ErrorMsg`);
+  errorMsgElement.textContent = isValid ? "" : input.errorMsg;
+  return isValid;
 }
 
-function validateLastName() {
-  const regName = /^[a-z ,.'-]+$/i;
-  const lastNameErrorMsg = document.getElementById("lastNameErrorMsg");
-
-  const lastName = lastNameInput.value.trim();
-  if (regName.test(lastName)) {
-    lastNameErrorMsg.textContent = "";
-    return true;
-  } else {
-    lastNameErrorMsg.textContent = "Please input a correct last name.";
-    return false;
-  }
-}
-
-function validateAddress() {
-  const regAddress = /^[a-zA-Z0-9\s,.'\-#]+$/;
-  const addressErrorMsg = document.getElementById("addressErrorMsg");
-
-  const address = addressInput.value.trim();
-  if (regAddress.test(address)) {
-    addressErrorMsg.textContent = "";
-    return true;
-  } else {
-    addressErrorMsg.textContent = "Please enter a valid address.";
-    return false;
-  }
-}
-
-function validateCity() {
-  const regCity = /^[a-zA-Z\s.'\-]+$/;
-  const cityErrorMsg = document.getElementById("cityErrorMsg");
-
-  const city = cityInput.value.trim();
-  if (regCity.test(city)) {
-    cityErrorMsg.textContent = "";
-    return true;
-  } else {
-    cityErrorMsg.textContent = "Please enter a valid city name.";
-    return false;
-  }
-}
-
-function validateEmail() {
-  const regEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  const emailErrorMsg = document.getElementById("emailErrorMsg");
-
-  const email = emailInput.value.trim();
-  if (regEmail.test(email)) {
-    emailErrorMsg.textContent = "";
-    return true;
-  } else {
-    emailErrorMsg.textContent = "Please enter a valid email address.";
-    return false;
-  }
-}
-
-// Function to check all validations
+/**
+ * Validate all form inputs
+ * @returns {boolean} - True if all inputs are valid, otherwise false
+ */
 function validateForm() {
-  return (
-    validateFirstName() &&
-    validateLastName() &&
-    validateAddress() &&
-    validateCity() &&
-    validateEmail()
-  );
+  return inputs.every(validateInput);
 }
 
-// Call validation functions to enable live error warnings on input change
-firstNameInput.addEventListener("input", validateFirstName);
-lastNameInput.addEventListener("input", validateLastName);
-addressInput.addEventListener("input", validateAddress);
-cityInput.addEventListener("input", validateCity);
-emailInput.addEventListener("input", validateEmail);
-
-// Define form
-const form = document.querySelector("form");
+// Add input event listeners
+inputs.forEach((input) => {
+  document
+    .getElementById(input.id)
+    .addEventListener("input", () => validateInput(input));
+});
 
 // Form event listener
-form.addEventListener("submit", (e) => {
+document.querySelector("form").addEventListener("submit", (e) => {
   e.preventDefault();
-  if (localStorage.length === 0) {
+
+  const cartItemsData = JSON.parse(localStorage.getItem("cartitems")) || [];
+
+  if (parseInt(localStorage.getItem("num")) === 0) {
     alert("Your cart is empty. Please add items before placing an order.");
     return;
   }
+
   if (validateForm()) {
-    const products = [];
-    for (let i = 1; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      const item = JSON.parse(localStorage.getItem(key));
-      products.push(item.page_id);
-    }
+    const products = cartItemsData.map((item) => item.page_id);
 
     fetch("http://localhost:3000/api/products/order", {
       method: "POST",
@@ -246,11 +231,11 @@ form.addEventListener("submit", (e) => {
       },
       body: JSON.stringify({
         contact: {
-          firstName: firstNameInput.value,
-          lastName: lastNameInput.value,
-          address: addressInput.value,
-          city: cityInput.value,
-          email: emailInput.value,
+          firstName: document.getElementById("firstName").value,
+          lastName: document.getElementById("lastName").value,
+          address: document.getElementById("address").value,
+          city: document.getElementById("city").value,
+          email: document.getElementById("email").value,
         },
         products,
       }),
@@ -264,9 +249,8 @@ form.addEventListener("submit", (e) => {
       .then((json) => {
         console.log("Order placed successfully");
         localStorage.setItem("customerOrder", JSON.stringify(json));
-        let orderId = json.orderId;
-
-        window.location.href = "confirmation.html" + "?orderId=" + orderId;
+        const orderId = json.orderId;
+        window.location.href = `confirmation.html?orderId=${orderId}`;
         localStorage.clear();
       })
       .catch((error) => {
@@ -274,7 +258,6 @@ form.addEventListener("submit", (e) => {
         alert("Error placing order. Please try again later.");
       });
   } else {
-    console.log("Form validation failed. Please check errors.");
     alert("Please fill out all required fields correctly.");
   }
 });
